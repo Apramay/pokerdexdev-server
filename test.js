@@ -887,9 +887,22 @@ async function cashOutToWallet(playerWallet, amountSOL) {
        
     );
 
-    let signature = await sendAndConfirmTransaction(connection, transaction, [treasuryKeypair]);
-    console.log("✅ Transaction Confirmed:", signature);
-    return signature;
+    // ✅ STEP 1: Get a recent blockhash
+const latestBlockhash = await connection.getLatestBlockhash();
+
+// ✅ STEP 2: Attach blockhash and feePayer
+transaction.recentBlockhash = latestBlockhash.blockhash;
+transaction.feePayer = treasuryKeypair.publicKey;
+
+// ✅ STEP 3: Send and confirm using the block context
+const signature = await connection.sendTransaction(transaction, [treasuryKeypair]);
+
+await connection.confirmTransaction({
+    signature,
+    blockhash: latestBlockhash.blockhash,
+    lastValidBlockHeight: latestBlockhash.lastValidBlockHeight
+}, "confirmed");
+
 }
 
 // WebSocket server event handling
