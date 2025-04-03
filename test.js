@@ -904,31 +904,31 @@ wss.on('connection', function connection(ws) {
         try {
             const data = JSON.parse(message);
 
-            if (data.type === "addTokens") {
-    const { tableId, playerName, tokens, solUsed } = data;
-    const table = tables.get(tableId);
+            if (data.type === "cashout") {
+    const table = tables.get(data.tableId);
     if (!table) return;
 
+    const player = table.players.find(p => p.name === data.playerName);
+    if (!player || !player.walletAddress) return;
+
     const solToToken = table.solToToken;
-    const expectedTokens = parseFloat(solUsed) * solToToken;
+    const tokensToCashOut = player.tokens;
+    const solAmount = tokensToCashOut / solToToken;
 
-    if (Math.abs(expectedTokens - tokens) > 1) {
-        console.log(`❌ Token mismatch for ${playerName}: expected ${expectedTokens}, got ${tokens}`);
-        return;
-    }
+    await cashOutToWallet(player.walletAddress, solAmount);
 
-    const player = table.players.find(p => p.name === playerName);
-    if (!player) return;
+    // Remove tokens and mark player as inactive/spectator
+    player.tokens = 0;
+    player.status = "inactive";
 
-    player.tokens += tokens;
-    console.log(`✅ ${playerName} (${player.walletAddress}) added ${tokens} tokens.`);
-    broadcastGameState(tableId);
+    broadcastGameState(data.tableId);
     broadcast({
         type: "message",
-        text: `${playerName} added tokens.`,
-        tableId
-    }, tableId);
+        text: `${player.name} cashed out ${tokensToCashOut} tokens.`,
+        tableId: data.tableId
+    }, data.tableId);
 }
+
 
             //  ✅  Handle "Show or Hide" Decision
             if (data.type ===
@@ -970,18 +970,31 @@ wss.on('connection', function connection(ws) {
                     setTimeout(resetGame, 1000, ws.tableId);
                 }
             }
-            if (data.type === "addTokens") {
-                //  ✅  Include player's SOL balance from the client
-                const tableId = data.tableId;
-                if (addTokens(tableId, data.playerName, data.tokens, data.playerSolBalance)) {
-                    broadcast({
-                        type: "message",
-                        text: `${data.playerName} added tokens.`,
-                        tableId: tableId
-                    }, tableId);
-                }
-                return;
-            }
+              if (data.type === "addTokens") {
+    const { tableId, playerName, tokens, solUsed } = data;
+    const table = tables.get(tableId);
+    if (!table) return;
+
+    const solToToken = table.solToToken;
+    const expectedTokens = parseFloat(solUsed) * solToToken;
+
+    if (Math.abs(expectedTokens - tokens) > 1) {
+        console.log(`❌ Token mismatch for ${playerName}: expected ${expectedTokens}, got ${tokens}`);
+        return;
+    }
+
+    const player = table.players.find(p => p.name === playerName);
+    if (!player) return;
+
+    player.tokens += tokens;
+    console.log(`✅ ${playerName} (${player.walletAddress}) added ${tokens} tokens.`);
+    broadcastGameState(tableId);
+    broadcast({
+        type: "message",
+        text: `${playerName} added tokens.`,
+        tableId
+    }, tableId);
+}
 
             
             //  ✅  Handle other game actions separately
@@ -996,6 +1009,8 @@ wss.on('connection', function connection(ws) {
                     name: data.name,
                     ws: ws,
                     tokens: tokenAmount,
+                        walletAddress: data.walletAddress,  // 🆕 Save wallet
+
                     hand: [],
                     currentBet: 0,
                     status: 'active',
