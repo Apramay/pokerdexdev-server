@@ -882,13 +882,9 @@ async function cashOutToWallet(playerWallet, amountSOL) {
         SystemProgram.transfer({
             fromPubkey: treasuryKeypair.publicKey,
             toPubkey: new PublicKey(playerWallet),
-            lamports: amountSOL * 1e9 * 0.99, // 99% to player
-        }),
-        SystemProgram.transfer({
-            fromPubkey: treasuryKeypair.publicKey,
-            toPubkey: POKERDEX_TREASURY,
-            lamports: amountSOL * 1e9 * 0.01, // 1% fee
+    lamports: Math.floor(amountSOL * 1e9 * 0.99)
         })
+       
     );
 
     let signature = await sendAndConfirmTransaction(connection, transaction, [treasuryKeypair]);
