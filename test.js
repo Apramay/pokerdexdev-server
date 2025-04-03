@@ -881,6 +881,35 @@ require('dotenv').config();
     const connection = new Connection("https://mainnet.helius-rpc.com/?api-key=23d44740-e316-4d75-99b0-7fc95050f696");
 // Pokerdex Treasury Wallet (where the 1% fee goes)
 const POKERDEX_TREASURY = new PublicKey("2yTVMDxS1zCh9w1LD58U8UL5m96ZNXsTMY97e4stRJHQ");
+async function confirmWithTimeout(connection, signature, blockhash, lastValidBlockHeight, timeoutMs = 10000) {
+    const confirmPromise = connection.confirmTransaction(
+        {
+            signature,
+            blockhash,
+            lastValidBlockHeight
+        },
+        "confirmed"
+    );
+
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("⏰ Confirmation timeout")), timeoutMs)
+    );
+
+    try {
+        return await Promise.race([confirmPromise, timeoutPromise]);
+    } catch (err) {
+        console.warn("⚠️ confirmTransaction failed or timed out. Trying getSignatureStatus fallback...");
+        const statusResp = await connection.getSignatureStatus(signature);
+        const status = statusResp.value;
+
+        if (!status || status.err) {
+            throw new Error("❌ Transaction failed or not found");
+        }
+
+        console.log("✅ Fallback: Transaction found with getSignatureStatus");
+        return status;
+    }
+}
 
 // Function to send SOL from Pokerdex account to player
 async function cashOutToWallet(playerWallet, amountSOL) {
@@ -905,11 +934,10 @@ transaction.feePayer = treasuryKeypair.publicKey;
 // ✅ STEP 3: Send and confirm using the block context
 const signature = await connection.sendTransaction(transaction, [treasuryKeypair]);
 
-await connection.confirmTransaction({
-    signature,
-    blockhash: latestBlockhash.blockhash,
-    lastValidBlockHeight: latestBlockhash.lastValidBlockHeight
-}, "confirmed");
+await confirmWithTimeout(connection, signature, latestBlockhash.blockhash, latestBlockhash.lastValidBlockHeight);
+
+    console.log("✅ Transaction Confirmed:", signature);
+    return signature;
 
 }
 
