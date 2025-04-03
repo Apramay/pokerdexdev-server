@@ -76,6 +76,15 @@ function broadcast(data, tableId) {
         }
     });
 }
+function broadcastMessage(message) {
+    const json = JSON.stringify(message);
+    wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+            client.send(json);
+        }
+    });
+}
+
 // Function to broadcast the current game state to all clients
 function broadcastGameState(tableId) {
     const table = tables.get(tableId);
