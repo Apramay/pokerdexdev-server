@@ -864,6 +864,38 @@ function compareHands(handA, handB) {
     }
     return 0; // exact tie
 }
+
+const { Connection, Keypair, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction } = require('@solana/web3.js');
+require('dotenv').config();
+
+// Solana Connection
+const connection = new Connection("https://api.mainnet-beta.solana.com");
+
+// Pokerdex Treasury Wallet (where the 1% fee goes)
+const POKERDEX_TREASURY = new PublicKey("YourPokerdexWalletAddress");
+
+// Function to send SOL from Pokerdex account to player
+async function cashOutToWallet(playerWallet, amountSOL) {
+    const treasuryKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.PRIVATE_KEY)));
+
+    let transaction = new Transaction().add(
+        SystemProgram.transfer({
+            fromPubkey: treasuryKeypair.publicKey,
+            toPubkey: new PublicKey(playerWallet),
+            lamports: amountSOL * 1e9 * 0.99, // 99% to player
+        }),
+        SystemProgram.transfer({
+            fromPubkey: treasuryKeypair.publicKey,
+            toPubkey: POKERDEX_TREASURY,
+            lamports: amountSOL * 1e9 * 0.01, // 1% fee
+        })
+    );
+
+    let signature = await sendAndConfirmTransaction(connection, transaction, [treasuryKeypair]);
+    console.log("✅ Transaction Confirmed:", signature);
+    return signature;
+}
+
 // WebSocket server event handling
 wss.on('connection', function connection(ws) {
     console.log(' ✅  A new client connected');
@@ -872,24 +904,32 @@ wss.on('connection', function connection(ws) {
         try {
             const data = JSON.parse(message);
 
-            if (data.type === "cashout") {
-            let tableId = data.tableId;
-            let table = tables.get(tableId);
-            if (!table) return;
+            if (data.type === "addTokens") {
+    const { tableId, playerName, tokens, solUsed } = data;
+    const table = tables.get(tableId);
+    if (!table) return;
 
-            // Find and remove the player
-            table.players = table.players.filter(player => player.name !== data.playerName);
-            console.log(`❌ Player ${data.playerName} cashed out and left the table.`);
+    const solToToken = table.solToToken;
+    const expectedTokens = parseFloat(solUsed) * solToToken;
 
-            // Broadcast updated player list
-            broadcast({ type: "updatePlayers", players: table.players.map(({ ws, ...player }) => player), tableId: tableId }, tableId);
+    if (Math.abs(expectedTokens - tokens) > 1) {
+        console.log(`❌ Token mismatch for ${playerName}: expected ${expectedTokens}, got ${tokens}`);
+        return;
+    }
 
-            // If only one player remains, end the game
-            if (table.players.length === 1) {
-                console.log("🏆 Only one player remains, ending the game.");
-                showdown(tableId);
-            }
-        }
+    const player = table.players.find(p => p.name === playerName);
+    if (!player) return;
+
+    player.tokens += tokens;
+    console.log(`✅ ${playerName} (${player.walletAddress}) added ${tokens} tokens.`);
+    broadcastGameState(tableId);
+    broadcast({
+        type: "message",
+        text: `${playerName} added tokens.`,
+        tableId
+    }, tableId);
+}
+
             //  ✅  Handle "Show or Hide" Decision
             if (data.type ===
                 "showHideDecision") {
