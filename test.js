@@ -152,7 +152,7 @@ function startNewHand(tableId) {
         player.tokens -= blindAmount;
         player.currentBet = blindAmount;
         player.totalContribution = blindAmount; // ✅ Fix: Incorporate blinds into totalContribution
-table.pot += blinddAmount;
+table.pot += blindAmount;
     });
     table.currentBet = table.bigBlindAmount;
     // Set the starting player (after the big blind)
@@ -872,7 +872,7 @@ require('dotenv').config();
 const connection = new Connection("https://api.mainnet-beta.solana.com");
 
 // Pokerdex Treasury Wallet (where the 1% fee goes)
-const POKERDEX_TREASURY = new PublicKey("YourPokerdexWalletAddress");
+const POKERDEX_TREASURY = new PublicKey("4t1re84Q3VyJgHocJ7dPV3Z66RD883fGsM4Pzbwmc7utP1j1zt1hCQmtmQ6Fc4DCQc7MgkLNTMegEXSgjvtj5a3L");
 
 // Function to send SOL from Pokerdex account to player
 async function cashOutToWallet(playerWallet, amountSOL) {
