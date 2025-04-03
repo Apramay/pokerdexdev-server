@@ -1035,7 +1035,7 @@ ws.on("message", async function incoming(message) {
                 const player = {
                     name: data.name,
                     ws: ws,
-                    tokens: tokenAmount,
+                    tokens,
                         walletAddress: data.walletAddress,  // 🆕 Save wallet
 solToToken: data.solToToken, 
                     hand: [],
