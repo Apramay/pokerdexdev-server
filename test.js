@@ -6,7 +6,7 @@ const bodyParser = require("body-parser");
 
 const app = express();
 app.use(cors({
-    origin: "https://apramay.github.io", //  ✅  Allow requests from your frontend
+    origin: "https://cobytofamous.github.io", //  ✅  Allow requests from your frontend
     methods: ["GET", "POST", "OPTIONS"]  //  ✅  Specify allowed HTTP methods
 }));
 app.use(bodyParser.json());
