@@ -904,29 +904,55 @@ ws.on("message", async function incoming(message) {
         try {
             const data = JSON.parse(message);
 
-            if (data.type === "cashout") {
-    const table = tables.get(data.tableId);
-    if (!table) return;
+          if (data.type === "cashout") {
+    const { playerName, tableId } = data;
 
-    const player = table.players.find(p => p.name === data.playerName);
-    if (!player || !player.walletAddress) return;
+    const table = tables.get(tableId);
+    if (!table) {
+        console.error("❌ Table not found:", tableId);
+        return;
+    }
+
+    const player = table.players.find(p => p.name === playerName);
+    if (!player || !player.walletAddress) {
+        console.error("❌ Player not found or missing wallet address.");
+        return;
+    }
 
     const solToToken = table.solToToken;
+    if (!solToToken || isNaN(solToToken)) {
+        console.error("❌ Invalid solToToken rate.");
+        return;
+    }
+
     const tokensToCashOut = player.tokens;
+    if (!tokensToCashOut || tokensToCashOut <= 0) {
+        console.warn("❌ Player has no tokens to cash out.");
+        return;
+    }
+
+    // 💰 Calculate payout amount
     const solAmount = tokensToCashOut / solToToken;
 
-    await cashOutToWallet(player.walletAddress, solAmount);
+    try {
+        console.log(`💸 Cashing out ${tokensToCashOut} tokens for ${player.walletAddress}`);
+        console.log(`🔄 Converting ${tokensToCashOut} tokens → ${solAmount.toFixed(6)} SOL at rate ${solToToken}`);
 
-    // Remove tokens and mark player as inactive/spectator
-    player.tokens = 0;
-    player.status = "inactive";
+        await cashOutToWallet(player.walletAddress, solAmount);  // 📤 Send real SOL
 
-    broadcastGameState(data.tableId);
-    broadcast({
-        type: "message",
-        text: `${player.name} cashed out ${tokensToCashOut} tokens.`,
-        tableId: data.tableId
-    }, data.tableId);
+        player.tokens = 0; // 🔁 Reset token balance
+
+        // ✅ Notify frontend
+        const message = {
+            type: "playerCashedOut",
+            playerName: playerName,
+            tableId: tableId,
+        };
+        broadcastMessage(message);
+
+    } catch (err) {
+        console.error("❌ Cashout failed:", err);
+    }
 }
 
 
@@ -999,12 +1025,13 @@ ws.on("message", async function incoming(message) {
             
             //  ✅  Handle other game actions separately
             if (data.type === 'join') {
-                const tokenAmount = data.tokens; // Use selected token amount
+    const { name, walletAddress, tableId, tokens, solUsed, solToToken } = data;
 
-    if (!tokenAmount || tokenAmount <= 0) {
-        console.warn(`❌ Invalid token amount for ${data.name}`);
+   if (!name || !walletAddress || !tableId || !tokens || !solUsed || !solToToken) {
+        console.error("❌ Missing data in join request");
         return;
     }
+
                 const player = {
                     name: data.name,
                     ws: ws,
