@@ -1035,7 +1035,8 @@ ws.on("message", async function incoming(message) {
                 const player = {
                     name: data.name,
                     ws: ws,
-                    tokens,
+                    tokens: tokens, // Use the value from `data.tokens`
+
                         walletAddress: data.walletAddress,  // 🆕 Save wallet
 solToToken: data.solToToken, 
                     hand: [],
@@ -1062,7 +1063,7 @@ solToToken: data.solToToken,
                     tables.set(tableId, table);
                 }
                 table.players.push(player);
-                console.log(` ➕  Player ${data.name} with ${tokenAmount} tokens . Total players: ${table.players.length}`);
+                console.log(` ➕  Player ${data.name} with ${tokens} tokens . Total players: ${table.players.length}`);
                 broadcast({ type: 'updatePlayers', players: table.players.map(({ ws, ...player }) => player) , tableId: tableId }, tableId);
             } else if (data.type === 'startGame') {
                 startGame(data.tableId);
