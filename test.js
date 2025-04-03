@@ -1010,7 +1010,7 @@ ws.on("message", async function incoming(message) {
                     ws: ws,
                     tokens: tokenAmount,
                         walletAddress: data.walletAddress,  // 🆕 Save wallet
-
+solToToken: data.solToToken, 
                     hand: [],
                     currentBet: 0,
                     status: 'active',
