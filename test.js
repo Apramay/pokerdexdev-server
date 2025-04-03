@@ -899,7 +899,7 @@ async function cashOutToWallet(playerWallet, amountSOL) {
 // WebSocket server event handling
 wss.on('connection', function connection(ws) {
     console.log(' ✅  A new client connected');
-    ws.on('message', function incoming(message) {
+ws.on("message", async function incoming(message) {
         console.log(' 📩  Received message from client:', message);
         try {
             const data = JSON.parse(message);
