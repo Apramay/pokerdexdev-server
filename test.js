@@ -1043,7 +1043,6 @@ solToToken: data.solToToken,
                     status: 'active',
                     allIn: false
                 };
-                let tableId = data.tableId;
                 ws.tableId = tableId;
                 let table = tables.get(tableId);
                 if (!table) {
