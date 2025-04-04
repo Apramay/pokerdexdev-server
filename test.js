@@ -6,7 +6,7 @@ const bodyParser = require("body-parser");
 
 const app = express();
 app.use(cors({
-    origin: "https://cobytofamous.github.io", //  ✅  Allow requests from your frontend
+    origin: "https://www.poker-dex.com", //  ✅  Allow requests from your frontend
     methods: ["GET", "POST", "OPTIONS"]  //  ✅  Specify allowed HTTP methods
 }));
 app.use(bodyParser.json());
