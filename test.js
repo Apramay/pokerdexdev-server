@@ -24,7 +24,51 @@ const rankValues = {
     "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "J": 11, "Q": 12, "K": 13, "A": 14
 }; 
 
+const { Connection, Keypair, PublicKey, Transaction, SystemProgram } = require('@solana/web3.js');
+require('dotenv').config(); // Load PRIVATE_KEY and HELIUS_API_KEY from .env
+const express = require('express');
+const cors = require('cors');
 
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const connection = new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`);
+
+// Replace with your real treasury pubkey
+const TREASURY_WALLET = new PublicKey("Ev3qxX4nZEr3erbMCte6Ji1sBR26SbWYEKUxMm3Mdxxg");
+
+// ➕ Buy-in Endpoint
+app.post('/api/buyin', async (req, res) => {
+  try {
+    const { from, amount } = req.body;
+
+    if (!from || !amount || isNaN(amount)) {
+      return res.status(400).json({ error: "Invalid request" });
+    }
+
+    const fromPubkey = new PublicKey(from);
+    const lamports = Math.floor(parseFloat(amount) * 1e9);
+
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey,
+        toPubkey: TREASURY_WALLET,
+        lamports,
+      })
+    );
+
+    transaction.feePayer = fromPubkey;
+    transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+    res.json({
+      transaction: Buffer.from(transaction.serialize({ requireAllSignatures: false })).toString('base64')
+    });
+  } catch (err) {
+    console.error("Buy-in error:", err);
+    res.status(500).json({ error: "Failed to generate transaction" });
+  }
+});
 
 // Function to create a new deck of cards
 function createDeck() {
