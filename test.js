@@ -914,9 +914,12 @@ async function confirmWithTimeout(connection, signature, blockhash, lastValidBlo
 // Function to send SOL from Pokerdex account to player
 async function cashOutToWallet(playerWallet, amountSOL) {
     const treasuryKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.PRIVATE_KEY)));
-
-     const lamportsToSend = Math.floor(amountSOL * 1e9 * 0.99);
-    const MIN_RENT_BUFFER = 100000; // 0.00001 SOL (~for fee/rent)
+const totalLamports = Math.floor(amountSOL * 1e9);
+const platformFee = Math.floor(totalLamports * 0.05);
+const MIN_RENT_BUFFER = 10000;
+    
+     const lamportsToSend = totalLamports - platformFee - MIN_RENT_BUFFER;
+    
 
     // ✅ Check balance before trying the transfer
     const treasuryBalance = await connection.getBalance(treasuryKeypair.publicKey);
