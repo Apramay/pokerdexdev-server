@@ -916,16 +916,15 @@ async function cashOutToWallet(playerWallet, amountSOL) {
     const treasuryKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.PRIVATE_KEY)));
 const totalLamports = Math.floor(amountSOL * 1e9);
 const platformFee = Math.floor(totalLamports * 0.05);
-const MIN_RENT_BUFFER = 10000;
-    
-     const lamportsToSend = totalLamports - platformFee - MIN_RENT_BUFFER;
-    
+const lamportsAfterFee = totalLamports - platformFee;
 
-    // ✅ Check balance before trying the transfer
-    const treasuryBalance = await connection.getBalance(treasuryKeypair.publicKey);
-    if (treasuryBalance < lamportsToSend + MIN_RENT_BUFFER) {
-        throw new Error(`❌ Treasury balance too low. Available: ${treasuryBalance}, Required: ${lamportsToSend + MIN_RENT_BUFFER}`);
-    }
+const TX_FEE_BUFFER = 10000; // Safety net
+const lamportsToSend = lamportsAfterFee - TX_FEE_BUFFER;
+
+const treasuryBalance = await connection.getBalance(treasuryKeypair.publicKey);
+if (treasuryBalance < lamportsToSend + TX_FEE_BUFFER) {
+    throw new Error(`❌ Not enough SOL in treasury. Required: ${lamportsToSend + TX_FEE_BUFFER}, Available: ${treasuryBalance}`);
+}
     let transaction = new Transaction().add(
         SystemProgram.transfer({
             fromPubkey: treasuryKeypair.publicKey,
