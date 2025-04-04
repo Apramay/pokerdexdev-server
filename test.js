@@ -915,11 +915,19 @@ async function confirmWithTimeout(connection, signature, blockhash, lastValidBlo
 async function cashOutToWallet(playerWallet, amountSOL) {
     const treasuryKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.PRIVATE_KEY)));
 
+     const lamportsToSend = Math.floor(amountSOL * 1e9 * 0.99);
+    const MIN_RENT_BUFFER = 100000; // 0.00001 SOL (~for fee/rent)
+
+    // ✅ Check balance before trying the transfer
+    const treasuryBalance = await connection.getBalance(treasuryKeypair.publicKey);
+    if (treasuryBalance < lamportsToSend + MIN_RENT_BUFFER) {
+        throw new Error(`❌ Treasury balance too low. Available: ${treasuryBalance}, Required: ${lamportsToSend + MIN_RENT_BUFFER}`);
+    }
     let transaction = new Transaction().add(
         SystemProgram.transfer({
             fromPubkey: treasuryKeypair.publicKey,
             toPubkey: new PublicKey(playerWallet),
-    lamports: Math.floor(amountSOL * 1e9 * 0.99)
+    lamports: lamportsToSend
         })
        
     );
