@@ -878,7 +878,7 @@ const { Connection, Keypair, PublicKey, Transaction, SystemProgram, sendAndConfi
 require('dotenv').config();
 
 // Solana Connection
-    const connection = new Connection("https://mainnet.helius-rpc.com/?api-key=23d44740-e316-4d75-99b0-7fc95050f696");
+    const connection = new Connection("https://mainnet.helius-rpc.com/?api-key=e9893869-2145-41d5-8e08-58af10750043");
 // Pokerdex Treasury Wallet (where the 1% fee goes)
 const POKERDEX_TREASURY = new PublicKey("2yTVMDxS1zCh9w1LD58U8UL5m96ZNXsTMY97e4stRJHQ");
 async function confirmWithTimeout(connection, signature, blockhash, lastValidBlockHeight, timeoutMs = 10000) {
