@@ -146,8 +146,18 @@ function startNewHand(tableId) {
     }
     table.dealerIndex = (table.dealerIndex + 1) % table.players.length;
     // Determine small blind and big blind indices
-    let smallBlindIndex = (table.dealerIndex + 1) % table.players.length;
-    let bigBlindIndex = (table.dealerIndex + 2) % table.players.length;
+   let numPlayers = table.players.length;
+let smallBlindIndex, bigBlindIndex;
+
+if (numPlayers === 2) {
+    // Heads-up: dealer is SB, other is BB
+    smallBlindIndex = table.dealerIndex;
+    bigBlindIndex = (table.dealerIndex + 1) % numPlayers;
+} else {
+    // Standard: next player is SB, next-next is BB
+    smallBlindIndex = (table.dealerIndex + 1) % numPlayers;
+    bigBlindIndex = (table.dealerIndex + 2) % numPlayers;
+}
     // Reset player states and deal cards
     table.players.forEach((player, index) => {
         player.hand = player.tokens > 0 ? dealHand(table.deckForGame, 2) : [];
@@ -175,8 +185,18 @@ function setupBlinds(tableId) {
     if (!table) return;
 
     table.pot = 0; 
-    const smallBlindIndex = (table.dealerIndex + 1) % table.players.length;
-    const bigBlindIndex = (table.dealerIndex + 2) % table.players.length;
+    let numPlayers = table.players.length;
+let smallBlindIndex, bigBlindIndex;
+
+if (numPlayers === 2) {
+    // Heads-up: dealer is SB, other is BB
+    smallBlindIndex = table.dealerIndex;
+    bigBlindIndex = (table.dealerIndex + 1) % numPlayers;
+} else {
+    // Standard: next player is SB, next-next is BB
+    smallBlindIndex = (table.dealerIndex + 1) % numPlayers;
+    bigBlindIndex = (table.dealerIndex + 2) % numPlayers;
+}
     console.log(` 🎲  Setting up blinds: SB -> ${table.players[smallBlindIndex].name}, BB -> ${table.players[bigBlindIndex].name}`);
     postBlind(table.players[smallBlindIndex], table.smallBlindAmount, tableId);
     //  ✅  Small Blind posts
