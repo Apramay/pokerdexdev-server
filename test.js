@@ -146,7 +146,7 @@ function startNewHand(tableId) {
     }
     table.dealerIndex = (table.dealerIndex + 1) % table.players.length;
     // Determine small blind and big blind indices
-   let numPlayers = table.players.length;
+   let numPlayers = activePlayers.length;
 let smallBlindIndex, bigBlindIndex;
 
 if (numPlayers === 2) {
@@ -185,7 +185,7 @@ function setupBlinds(tableId) {
     if (!table) return;
 
     table.pot = 0; 
-    let numPlayers = table.players.length;
+    let numPlayers = activePlayers.length;
 let smallBlindIndex, bigBlindIndex;
 
 if (numPlayers === 2) {
