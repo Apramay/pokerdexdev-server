@@ -1165,17 +1165,47 @@ solToToken: data.solToToken,
             console.error(' ❌  Error parsing message:', error);
         }
     });
-    ws.on('close', () => {
-        console.log(' ❌  Client disconnected');
-        let tableId = ws.tableId;
-        if (tableId) {
-            let table = tables.get(tableId);
-            if (table) {
-                table.players = table.players.filter(player => player.ws !== ws);
-                broadcast({ type: 'updatePlayers', players: table.players.map(({ ws, ...player }) => player), tableId: tableId }, tableId);
-            }
+    ws.on('close', async () => {
+    console.log(' ❌  Client disconnected');
+    let tableId = ws.tableId;
+    if (!tableId) return;
+
+    let table = tables.get(tableId);
+    if (!table) return;
+
+    let disconnectedPlayer = table.players.find(p => p.ws === ws);
+    if (!disconnectedPlayer) return;
+
+    if (disconnectedPlayer.tokens > 0 && disconnectedPlayer.walletAddress) {
+        const solToToken = table.solToToken;
+        const solAmount = disconnectedPlayer.tokens / solToToken;
+
+        try {
+            console.log(`⚠️ Player ${disconnectedPlayer.name} disconnected with ${disconnectedPlayer.tokens} tokens. Auto-cashing out...`);
+
+            await cashOutToWallet(disconnectedPlayer.walletAddress, solAmount);
+
+            disconnectedPlayer.tokens = 0;
+            broadcastMessage({
+                type: "playerCashedOut",
+                playerName: disconnectedPlayer.name,
+                tableId: tableId,
+            });
+
+        } catch (err) {
+            console.error("❌ Auto-cashout on disconnect failed:", err);
         }
-    });
+    }
+
+    // Remove player from table
+    table.players = table.players.filter(player => player.ws !== ws);
+    broadcast({
+        type: 'updatePlayers',
+        players: table.players.map(({ ws, ...player }) => player),
+        tableId: tableId
+    }, tableId);
+});
+
 });
 // Action handlers
 function handleRaise(data, tableId) {
