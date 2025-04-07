@@ -900,7 +900,7 @@ require('dotenv').config();
 // Solana Connection
     const connection = new Connection("https://mainnet.helius-rpc.com/?api-key=e9893869-2145-41d5-8e08-58af10750043");
 // Pokerdex Treasury Wallet (where the 1% fee goes)
-const POKERDEX_TREASURY = new PublicKey("2yTVMDxS1zCh9w1LD58U8UL5m96ZNXsTMY97e4stRJHQ");
+const POKERDEX_TREASURY = new PublicKey("Ev3qxX4nZEr3erbMCte6Ji1sBR26SbWYEKUxMm3Mdxxg");
 app.get("/wallet-config", (req, res) => {
     res.json({
         rpcUrl: connection._rpcEndpoint,
