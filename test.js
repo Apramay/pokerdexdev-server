@@ -144,7 +144,13 @@ function startNewHand(tableId) {
         console.log(" ⚠️ No active players left! Game cannot continue.");
         return;
     }
+if (activePlayers.length === 2) {
+    const prevDealer = table.players[table.dealerIndex];
+    const otherPlayer = activePlayers.find(p => p.name !== prevDealer.name);
+    table.dealerIndex = table.players.findIndex(p => p.name === otherPlayer.name);
+} else {
     table.dealerIndex = (table.dealerIndex + 1) % table.players.length;
+}
     // Determine small blind and big blind indices
    let numPlayers = activePlayers.length;
 let smallBlindIndex, bigBlindIndex;
