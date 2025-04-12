@@ -48,6 +48,7 @@ app.post("/registerTable", (req, res) => {
         smallBlindAmount: Number(smallBlind),
         bigBlindAmount: Number(bigBlind),
                 gameType, // Store gameType
+        hostType,
         players: [],
         tableCards: [],
         pot: 0,
