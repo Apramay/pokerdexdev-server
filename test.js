@@ -384,7 +384,11 @@ function nextRound(tableId) {
     if (table.round === 0) {
         table.round++; 
         table.tableCards = dealHand(table.deckForGame, 3); // Flop
-
+if (table.hostType === "rake") {
+    const originalPot = table.pot;
+    table.pot = Math.floor(table.pot * 0.95); // Keep 95% in pot
+    console.log(`🏦 Rake taken at flop. Original Pot: ${originalPot}, After Rake: ${table.pot}`);
+}
         console.log("🃏 Flop dealt:", table.tableCards);
         broadcast({ type: "message", text: `Flop: ${JSON.stringify(table.tableCards)}`, tableId: tableId }, tableId);
     } else if (table.round === 1) {
@@ -947,11 +951,17 @@ async function confirmWithTimeout(connection, signature, blockhash, lastValidBlo
 }
 
 // Function to send SOL from Pokerdex account to player
-async function cashOutToWallet(playerWallet, amountSOL) {
+async function cashOutToWallet(playerWallet, amountSOL, hostType) {
     const treasuryKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.PRIVATE_KEY)));
 const totalLamports = Math.floor(amountSOL * 1e9);
-const platformFee = Math.floor(totalLamports * 0.05);
-const lamportsAfterFee = totalLamports - platformFee;
+if (table.hostType === "withdrawal") {
+    const platformFee = Math.floor(totalLamports * 0.05);
+    lamportsAfterFee = totalLamports - platformFee;
+    console.log(`💸 Withdrawal mode: 5% fee deducted. Fee: ${platformFee}, Final: ${lamportsAfterFee}`);
+} else {
+    lamportsAfterFee = totalLamports;
+}
+
 
 const TX_FEE_BUFFER = 10000; // Safety net
 const lamportsToSend = lamportsAfterFee - TX_FEE_BUFFER;
