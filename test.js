@@ -1200,7 +1200,7 @@ solToToken: data.solToToken,
         try {
             console.log(`⚠️ Player ${disconnectedPlayer.name} disconnected with ${disconnectedPlayer.tokens} tokens. Auto-cashing out...`);
 
-            await cashOutToWallet(disconnectedPlayer.walletAddress, solAmount);
+            await cashOutToWallet(disconnectedPlayer.walletAddress, solAmount, table);
 
             disconnectedPlayer.tokens = 0;
             broadcastMessage({
