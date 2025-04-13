@@ -1038,7 +1038,7 @@ ws.on("message", async function incoming(message) {
         console.log(`💸 Cashing out ${tokensToCashOut} tokens for ${player.walletAddress}`);
         console.log(`🔄 Converting ${tokensToCashOut} tokens → ${solAmount.toFixed(6)} SOL at rate ${solToToken}`);
 
-        await cashOutToWallet(player.walletAddress, solAmount);  // 📤 Send real SOL
+        await cashOutToWallet(player.walletAddress, solAmount, table);  // 📤 Send real SOL
 
         player.tokens = 0; // 🔁 Reset token balance
 
