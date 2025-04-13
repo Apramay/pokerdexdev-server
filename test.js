@@ -951,7 +951,7 @@ async function confirmWithTimeout(connection, signature, blockhash, lastValidBlo
 }
 
 // Function to send SOL from Pokerdex account to player
-async function cashOutToWallet(playerWallet, amountSOL, hostType) {
+async function cashOutToWallet(playerWallet, amountSOL, table) {
     const treasuryKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.PRIVATE_KEY)));
 const totalLamports = Math.floor(amountSOL * 1e9);
 if (table.hostType === "withdrawal") {
